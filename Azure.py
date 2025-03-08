@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from langchain_openai import AzureChatOpenAI
 from pydantic import BaseModel, Field  # Add Pydantic for schema validation
 from dotenv import load_dotenv
@@ -9,6 +9,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 from datetime import datetime
+import glob  # For handling multiple credentials files
 
 # Configure logging
 logging.basicConfig(
@@ -19,6 +20,8 @@ logging.basicConfig(
 
 # Load environment variables
 load_dotenv()
+
+GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")  # Name of the Google Sheet
 
 # --------------- Configure Telegram API ---------------
 API_ID = os.getenv("TELEGRAM_API_ID")
@@ -42,9 +45,8 @@ client = AzureChatOpenAI(
     max_retries=2,
 )
 
-# Google Sheets Details
-GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")  # Name of the Google Sheet
-CREDENTIALS_FILE = "credentials.json"  # Path to your credentials file
+# Collect all `.json` credential files in the same directory
+CREDENTIALS_FILES = glob.glob("*.json")  # Look for credentials files ending with `.json`
 
 # -------- Add Structured Output Schema with Pydantic -------- #
 class JobDetails(BaseModel):
@@ -94,8 +96,8 @@ def extract_job_details(message):
         )
 
 # ------- Google Sheets Helper Functions -------
-def connect_to_google_sheet(sheet_name, credentials_file):
-    """Connect to Google Sheets API and get the sheet instance."""
+def connect_to_google_sheet(credentials_file: str):
+    """Connect to Google Sheets API and return the sheet instance."""
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive",
@@ -103,45 +105,47 @@ def connect_to_google_sheet(sheet_name, credentials_file):
     try:
         creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_file, scope)
         client = gspread.authorize(creds)
-        sheet = client.open(sheet_name).sheet1
+        sheet = client.open(GOOGLE_SHEET_NAME).sheet1
+        logging.info(f"Connected to Google Sheets using credentials: {credentials_file}")
         return sheet
     except Exception as e:
-        logging.error(f"Failed to connect to Google Sheets: {e}")
+        logging.error(f"Failed to connect to Google Sheets with {credentials_file}: {e}")
         raise e
 
-def append_to_google_sheet(sheet, data: JobDetails):
-    """Append a row of data to Google Sheets."""
-    try:
-        sheet.append_row(
-            [
-                data.company_name,
-                data.job_role,
-                data.ctc,
-                data.application_link,
-            ]
-        )
-        logging.info(f"Appended data to Google Sheets: {data}")
-    except Exception as e:
-        logging.error(f"Failed to append data to Google Sheets: {e}")
+def append_to_google_sheets(sheets, data: JobDetails):
+    """Append a row of data to all provided Google Sheets."""
+    for sheet in sheets:
+        try:
+            sheet.append_row(
+                [
+                    data.company_name,
+                    data.job_role,
+                    data.ctc,
+                    data.application_link,
+                ]
+            )
+            logging.info(f"Appended data to Google Sheet: {sheet.title}")
+        except Exception as e:
+            logging.error(f"Failed to append data to Google Sheet: {sheet.title}: {e}")
 
 # ------- Message Processing -------
-def process_message(message_text, sheet):
+def process_message(message_text, sheets):
     """Process the message: extract details and append them to Google Sheets."""
     logging.info(f"Processing message: {message_text}")
     # Use Azure OpenAI to extract job details
     job_details = extract_job_details(message_text)
     if any([job_details.company_name, job_details.job_role, job_details.ctc, job_details.application_link]):
         logging.info(f"Extracted job details: {job_details}")
-        append_to_google_sheet(sheet, job_details)
+        append_to_google_sheets(sheets, job_details)
     else:
         logging.info("No job details found in message.")
 
 # ------- Telegram Event Handlers -------
-async def handle_new_message(event, sheet):
+async def handle_new_message(event, sheets):
     """Handle new message event and process the message."""
     message_text = event.raw_text
     logging.info(f"New message received: {message_text}")
-    process_message(message_text, sheet)
+    process_message(message_text, sheets)
 
 # ------- Main Workflow -------
 async def main():
@@ -149,17 +153,29 @@ async def main():
     Main function to:
     - Fetch all messages delivered today from each channel
     - Listen for new messages
+    - Append data to multiple Google Sheets
     """
     # Initialize Telegram client
     client_telegram = TelegramClient("Session", API_ID, API_HASH)
     # Start Telegram client
     await client_telegram.start()
     logging.info("Connected to Telegram!")
-    
-    # Connect to Google Sheets
-    sheet = connect_to_google_sheet(GOOGLE_SHEET_NAME, CREDENTIALS_FILE)
-    logging.info("Connected to Google Sheets!")
-    
+
+    # Connect to all Google Sheets
+    sheets = []
+    for credentials_file in CREDENTIALS_FILES:
+        try:
+            sheet = connect_to_google_sheet(credentials_file)
+            sheets.append(sheet)
+        except Exception as e:
+            logging.error(f"Skipping Google Sheet for {credentials_file} due to errors.")
+
+    if not sheets:
+        logging.error("No Google Sheets available. Exiting.")
+        return
+
+    logging.info(f"Connected to {len(sheets)} Google Sheets.")
+
     # Get current day boundaries for filtering messages
     now = datetime.utcnow()  # Use UTC timezone
     start_of_day = datetime(now.year, now.month, now.day)  # Midnight UTC
@@ -175,7 +191,7 @@ async def main():
             logging.info(f"Added channel: {entity.title}")
         except Exception as e:
             logging.error(f"Failed to get entity for {channel}: {e}")
-    
+
     # Fetch and process today's messages from each channel
     for entity in channel_entities:
         try:
@@ -186,7 +202,7 @@ async def main():
                 reverse=True,  # Fetch in chronological order (oldest first)
             ):
                 if msg.message:  # Process each non-empty message
-                    process_message(msg.message, sheet)
+                    process_message(msg.message, sheets)
         except Exception as e:
             logging.error(f"Error fetching messages from {entity.title}: {e}")
 
@@ -194,7 +210,7 @@ async def main():
     @client_telegram.on(events.NewMessage(chats=channel_entities))
     async def new_message_listener(event):
         """Handle new messages for the specified channels."""
-        await handle_new_message(event, sheet)
+        await handle_new_message(event, sheets)
 
     # Run the Telegram client until disconnected
     logging.info("Listening for new messages...")
