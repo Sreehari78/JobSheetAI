@@ -1,6 +1,6 @@
-telethon
-openai
-gspread
-oauth2client
+azure-functions
 python-dotenv
-langchain-openai
+oauth2client
+gspread
+langchain_openai
+openai
