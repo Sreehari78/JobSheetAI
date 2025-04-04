@@ -1,0 +1,33 @@
+name: Daily Job Scraper
+
+on:
+  schedule:
+    - cron: "30 17 * * *" # Runs at 11:30 PM IST
+  workflow_dispatch: # Allows manual execution
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Decode Google Sheets Credentials
+        env:
+          GOOGLE_SHEET_CREDENTIALS: ${{ secrets.GOOGLE_SHEET_CREDENTIALS }}
+        run: |
+          echo "$GOOGLE_SHEET_CREDENTIALS" | base64 --decode > credentials.json
+
+      - name: Run Python Script with Credentials
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: credentials.json
+        run: python job_scraper.py
