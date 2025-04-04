@@ -9,7 +9,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 from datetime import datetime, timezone
-import glob
+import ast
 
 # -------- Configure Logging -------- #
 logging.basicConfig(
@@ -50,7 +50,7 @@ client = AzureChatOpenAI(
 )
 
 # Collect all `.json` credential files in the current directory
-CREDENTIALS_FILES = os.getenv("GOOGLE_SHEET_SREEHARI_CREDENTIALS")
+CREDENTIALS_FILES = ["sreehari-credentials.json"]  # We will create this file dynamically in GitHub Actions
 
 # -------- Add Structured Output Schema with Pydantic -------- #
 class JobDetails(BaseModel):
@@ -224,6 +224,8 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
+        print(f"Credentials files: {type(CREDENTIALS_FILES)}")
+
     except KeyboardInterrupt:
         logging.info("Program terminated by user.")
     except Exception as e:
