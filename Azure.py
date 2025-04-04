@@ -50,7 +50,7 @@ client = AzureChatOpenAI(
 )
 
 # Collect all `.json` credential files in the current directory
-CREDENTIALS_FILES = glob.glob("./sheets/*.json")
+CREDENTIALS_FILES = os.getenv("GOOGLE_SHEET_SREEHARI_CREDENTIALS")
 
 # -------- Add Structured Output Schema with Pydantic -------- #
 class JobDetails(BaseModel):
