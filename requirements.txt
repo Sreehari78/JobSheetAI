@@ -1,0 +1,6 @@
+telethon
+openai
+gspread
+oauth2client
+python-dotenv
+langchain-openai
