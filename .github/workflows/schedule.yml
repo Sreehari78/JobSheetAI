@@ -2,8 +2,8 @@ name: Run Telegram Job Posting Script
 
 on:
   schedule:
-    # Run daily at 6:35 PM UTC (12:05 AM IST)
-    - cron: "35 18 * * *" # 6:35 PM UTC is 12:05 AM IST
+    # Run daily at 11 PM IST (UTC is +5:30)
+    - cron: "30 17 * * *" # 17:30 UTC is 11:00 PM IST
 
 jobs:
   run-script:
@@ -19,7 +19,7 @@ jobs:
         uses: RizwanZahid/create-json@v1
         with:
           file-name: "cred.json"
-          content: ${{ secrets.GCP_CRED_JSON }}
+          content: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
 
       # Step 3: Set up Python environment
       - name: Set up Python
