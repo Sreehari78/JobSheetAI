@@ -2,8 +2,8 @@ name: Run Telegram Job Posting Script
 
 on:
   schedule:
-    # Run daily at 11 PM IST (UTC is +5:30)
-    - cron: "30 17 * * *" # 17:30 UTC is 11:00 PM IST
+    # Run daily at 6:35 PM UTC (12:05 AM IST)
+    - cron: "35 18 * * *" # 6:35 PM UTC is 12:05 AM IST
 
 jobs:
   run-script:
