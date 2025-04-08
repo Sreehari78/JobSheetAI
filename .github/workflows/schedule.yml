@@ -1,50 +1,49 @@
-name: Run Telegram Job Posting Script
+name: Scheduled Execution
 
 on:
   schedule:
-    # Run daily at 11 PM IST (UTC is +5:30)
-    - cron: "30 17 * * *" # 17:30 UTC is 11:00 PM IST
+    - cron: "0 0 * * *" # Runs scheduled daily at midnight UTC
+  workflow_dispatch: # Allows manual execution
 
 jobs:
-  run-script:
+  run-python-script:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the code in the repository
+      # Step 1: Check out repository
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      # Step 2: Create the cred.json file from GitHub's secret
-      - name: Generate cred.json file
-        uses: RizwanZahid/create-json@v1
-        with:
-          file-name: "cred.json"
-          content: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
-
-      # Step 3: Set up Python environment
+      # Step 2: Set up Python
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
+          python-version: 3.10 # Replace with your required Python version
+
+      # Step 3: Prepare and decode Google credentials file
+      - name: Decode Google credentials
+        env:
+          GOOGLE_CREDENTIALS_BASE64: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
+        run: |
+          echo "$GOOGLE_SHEET_SREEHARI_CREDENTIALS" | base64 -d > sheets/sreehari-credentials.json
+          echo "Google credentials decoded and saved to sheets folder"
 
       # Step 4: Install dependencies
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install telethon langchain_openai pydantic python-dotenv gspread oauth2client
 
-      # Step 5: Set up environment variables
-      - name: Set up environment variables
-        run: |
-          echo "TELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }}" >> $GITHUB_ENV
-          echo "TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }}" >> $GITHUB_ENV
-          echo "TELEGRAM_PHONE=${{ secrets.TELEGRAM_PHONE }}" >> $GITHUB_ENV
-          echo "GOOGLE_SHEET_NAME=${{ secrets.GOOGLE_SHEET_NAME }}" >> $GITHUB_ENV
-          echo "AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}" >> $GITHUB_ENV
-          echo "AZURE_OPENAI_API_VERSION=${{ secrets.AZURE_OPENAI_API_VERSION }}" >> $GITHUB_ENV
-          echo "AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}" >> $GITHUB_ENV
-          echo "AZURE_OPENAI_DEPLOYMENT_NAME=${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME }}" >> $GITHUB_ENV
-
-      # Step 6: Run the script
-      - name: Run the Python script
-        run: python script.py
+      # Step 5: Run the Python script
+      - name: Execute Python script
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELEGRAM_PHONE: ${{ secrets.TELEGRAM_PHONE }}
+          GOOGLE_SHEET_NAME: ${{ secrets.GOOGLE_SHEET_NAME }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME }}
+        run: python Azure.py
