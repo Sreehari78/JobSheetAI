@@ -29,15 +29,21 @@ API_ID = os.getenv("TELEGRAM_API_ID")
 API_HASH = os.getenv("TELEGRAM_API_HASH")
 PHONE_NUM = os.getenv("TELEGRAM_PHONE")
 CHANNELS = ["https://t.me/dot_aware", "https://t.me/OceanOfJobs", "https://t.me/blah1bla"]
+logging.info(f"The taken details are: {PHONE_NUM}, {API_ID}, {API_HASH}, {CHANNELS}")
+logging.info(f"With types: {type(PHONE_NUM)}, {type(API_ID)}, {type(API_HASH)}, {type(CHANNELS)}")
 
 # Google Sheets Configuration
 GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")
+logging.info(f"Google Sheet Name: {GOOGLE_SHEET_NAME}")
+logging.info(f"Type of Google Sheet Name: {type(GOOGLE_SHEET_NAME)}")
 
 # Azure OpenAI API Configuration
 AZURE_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 AZURE_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION")
 AZURE_API_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+logging.info(f"The taken details are: {AZURE_API_ENDPOINT}, {AZURE_API_VERSION}, {AZURE_DEPLOYMENT_NAME}, {AZURE_API_KEY}")
+logging.info(f"With types: {type(AZURE_API_ENDPOINT)}, {type(AZURE_API_VERSION)}, {type(AZURE_DEPLOYMENT_NAME)}, {type(AZURE_API_KEY)}")
 
 # -------- Initialize Azure OpenAI Client -------- #
 client = AzureChatOpenAI(
