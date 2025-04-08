@@ -27,7 +27,7 @@ jobs:
       # Step 4: Prepare and decode Google credentials file
       - name: Decode Google credentials
         env:
-          GOOGLE_CREDENTIALS_BASE64: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
+          GOOGLE_SHEET_SREEHARI_CREDENTIALS: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
         run: |
           echo "Creating 'sheets' directory..."
           mkdir -p sheets  # Ensure sheets directory exists
