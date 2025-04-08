@@ -50,7 +50,7 @@ client = AzureChatOpenAI(
 )
 
 # Collect all `.json` credential files in the current directory
-CREDENTIALS_FILES = ["sreehari-credentials.json"]  # We will create this file dynamically in GitHub Actions
+CREDENTIALS_FILES = ["sheets/sreehari-credentials.json"]  # We will create this file dynamically in GitHub Actions
 
 # -------- Add Structured Output Schema with Pydantic -------- #
 class JobDetails(BaseModel):
