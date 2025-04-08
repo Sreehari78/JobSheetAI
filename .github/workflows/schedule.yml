@@ -25,6 +25,7 @@ jobs:
         env:
           GOOGLE_CREDENTIALS_BASE64: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
         run: |
+          mkdir -p sheets
           echo "$GOOGLE_SHEET_SREEHARI_CREDENTIALS" | base64 -d > sheets/sreehari-credentials.json
           echo "Google credentials decoded and saved to sheets folder"
 
