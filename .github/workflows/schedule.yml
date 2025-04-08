@@ -32,7 +32,7 @@ jobs:
           echo "Creating 'sheets' directory..."
           mkdir -p sheets  # Ensure sheets directory exists
           echo "Decoding Google credentials..."
-          echo "$GOOGLE_CREDENTIALS_BASE64" | base64 -d > sheets/sreehari-credentials.json
+          echo "$GOOGLE_SHEET_SREEHARI_CREDENTIALS" | base64 -d > sheets/sreehari-credentials.json
           echo "Google credentials decoded successfully and saved to sheets/sreehari-credentials.json"
 
       # Step 5: Install dependencies
