@@ -1,4 +1,5 @@
 name: Scheduled Execution
+
 on:
   schedule:
     - cron: "0 0 * * *" # Runs scheduled daily at midnight UTC
@@ -9,42 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Enable debug mode for GitHub Actions
       - name: Enable Debug Mode
         run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
 
-      # Step 2: Check out repository
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # Step 3: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10.12 # Replace with your Python version
+          python-version: 3.10.12
 
-      # Step 4: Decode Google credentials file (Base64-Decoded)
       - name: Decode Google credentials
         env:
-          BASE64_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
+          GOOGLE_CREDENTIALS_BASE64: ${{ secrets.GOOGLE_SHEET_SREEHARI_CREDENTIALS }}
         run: |
-          echo "Creating 'sheets' directory..."
-          mkdir -p sheets  # Ensure sheets directory exists
-          echo "Decoding Base64-encoded Google credentials..."
-          echo "$BASE64_GOOGLE_CREDENTIALS" | base64 --decode | jq > sheets/sreehari-credentials.json
-          echo "Google credentials decoded successfully and saved to sheets/sreehari-credentials.json"
+          mkdir -p sheets
+          echo "$GOOGLE_CREDENTIALS_BASE64" | base64 -d > sheets/sreehari-credentials.json
 
-      # Step 5: Install dependencies
+      - name: Validate Google credentials file
+        run: |
+          echo "Validating decoded Google Sheets credentials file..."
+          cat sheets/sreehari-credentials.json  # Output the file contents
+        continue-on-error: true
+
       - name: Install Python dependencies
         run: |
-          echo "Upgrading pip..."
           python -m pip install --upgrade pip
-          echo "Installing Python dependencies from requirements.txt..."
           pip install -r requirements.txt
-          echo "Installing additional dependencies..."
-          pip install telethon langchain_openai pydantic python-dotenv gspread oauth2client
 
-      # Step 6: Execute Python script
       - name: Execute Python script
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
@@ -55,6 +49,4 @@ jobs:
           AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
           AZURE_OPENAI_DEPLOYMENT_NAME: ${{ secrets.AZURE_OPENAI_DEPLOYMENT_NAME }}
-        run: |
-          echo "Starting Python script execution..."
-          python Azure.py
+        run: python Azure.py
