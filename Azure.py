@@ -28,7 +28,7 @@ load_dotenv()
 API_ID = os.getenv("TELEGRAM_API_ID")
 API_HASH = os.getenv("TELEGRAM_API_HASH")
 PHONE_NUM = os.getenv("TELEGRAM_PHONE")
-CHANNELS = ["https://t.me/dot_aware", "https://t.me/OceanOfJobs", "https://t.me/blah1bla"]
+CHANNELS = ["https://t.me/dot_aware", "https://t.me/OceanOfJobs", "https://t.me/jobs_and_internships_updates", "https://t.me/blah1bla"]
 logging.info(f"The taken details are: {PHONE_NUM}, {API_ID}, {API_HASH}, {CHANNELS}")
 logging.info(f"With types: {type(PHONE_NUM)}, {type(API_ID)}, {type(API_HASH)}, {type(CHANNELS)}")
 
